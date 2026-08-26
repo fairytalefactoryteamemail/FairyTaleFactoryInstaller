@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:fluentui_system_icons/fluentui_system_icons.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:path/path.dart' as p;
 import '../../core/app_theme.dart';
 
 class StepOptions extends StatefulWidget {
@@ -12,6 +14,7 @@ class StepOptions extends StatefulWidget {
   final String pathLabel;
   final String addPathLabel;
   final String shortcutLabel;
+  final String defaultSubDir; // دریافت نام پوشه از کانفیگ
 
   const StepOptions({
     super.key,
@@ -23,6 +26,7 @@ class StepOptions extends StatefulWidget {
     required this.pathLabel,
     required this.addPathLabel,
     required this.shortcutLabel,
+    required this.defaultSubDir,
   });
 
   @override
@@ -30,19 +34,19 @@ class StepOptions extends StatefulWidget {
 }
 
 class _StepOptionsState extends State<StepOptions> {
-  late bool _addToPath;
-  late bool _createShortcut;
-
   @override
   void initState() {
     super.initState();
-    _addToPath = widget.addToPath;
-    _createShortcut = widget.createShortcut;
+    // مقداردهی پویای مسیر نصب در صورت خالی بودن کنترلر
+    if (widget.pathController.text.trim().isEmpty) {
+      final programFiles = Platform.environment['ProgramFiles'] ?? r'C:\Program Files';
+      widget.pathController.text = p.join(programFiles, widget.defaultSubDir);
+    }
   }
 
   Future<void> _pickDirectory() async {
     final String? selectedDirectory = await FilePicker.getDirectoryPath();
-    if (selectedDirectory != null) {
+    if (selectedDirectory != null && selectedDirectory.trim().isNotEmpty) {
       widget.pathController.text = selectedDirectory;
     }
   }
@@ -58,7 +62,7 @@ class _StepOptionsState extends State<StepOptions> {
         ),
         const SizedBox(height: 8),
         SizedBox(
-          height: 38, // ارتفاع یکسان برای Input و دکمه
+          height: 38,
           child: Row(
             children: [
               Expanded(
@@ -106,12 +110,8 @@ class _StepOptionsState extends State<StepOptions> {
         ),
         const SizedBox(height: 20),
         CheckboxListTile(
-          value: _addToPath,
-          onChanged: (val) {
-            final newValue = val ?? false;
-            setState(() => _addToPath = newValue);
-            widget.onAddPathChanged(newValue);
-          },
+          value: widget.addToPath,
+          onChanged: (val) => widget.onAddPathChanged(val ?? false),
           title: Text(
             widget.addPathLabel,
             style: const TextStyle(fontSize: 12, color: AppColors.textPrimary),
@@ -121,12 +121,8 @@ class _StepOptionsState extends State<StepOptions> {
           dense: true,
         ),
         CheckboxListTile(
-          value: _createShortcut,
-          onChanged: (val) {
-            final newValue = val ?? false;
-            setState(() => _createShortcut = newValue);
-            widget.onShortcutChanged(newValue);
-          },
+          value: widget.createShortcut,
+          onChanged: (val) => widget.onShortcutChanged(val ?? false),
           title: Text(
             widget.shortcutLabel,
             style: const TextStyle(fontSize: 12, color: AppColors.textPrimary),

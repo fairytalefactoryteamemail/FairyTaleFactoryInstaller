@@ -1,0 +1,19 @@
+{
+  "appId": "tale_farger_hub_home_page_data_maker",
+  "appName": "tale_farger_hub_home_page_data_maker",
+  "publisher": "Fairy Tale Factory",
+  "version": "0.1.1",
+  "mainExeName": "tale_farger_hub_home_page_data_maker.exe",
+  "uninstallerExeName": "uninstall.exe",
+  "defaultSubDir": "TaleForger",
+  "estimatedSizeKB": 125000,
+  "bundleFileName": "app_payload.zip",
+  "urls": {
+    "website": "https://github.com/fairytalefactoryteamemail",
+    "support": "https://github.com/fairytalefactoryteamemail/FairyTaleFactoryInstaller/issues"
+  },
+  "defaultOptions": {
+    "addToPath": true,
+    "createDesktopShortcut": true
+  }
+}

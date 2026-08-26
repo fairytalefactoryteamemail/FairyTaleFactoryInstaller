@@ -1,0 +1,23 @@
+END USER LICENSE AGREEMENT (EULA) FOR TALEFORGER SDK
+
+IMPORTANT - READ CAREFULLY: This End User License Agreement ("EULA") is a legal agreement between you (either an individual or a single entity) and Fairy Tale Factory for the TaleForger SDK software product.
+
+1. GRANT OF LICENSE
+Fairy Tale Factory grants you a non-exclusive, non-transferable license to install and use the TaleForger SDK on your devices in accordance with the terms of this agreement.
+
+2. RESTRICTIONS
+You may not:
+- Reverse engineer, decompile, or disassemble the binary executables of the SDK, except to the extent expressly permitted by applicable law.
+- Rent, lease, lend, or sublicense the software to third parties without prior authorization.
+- Remove or alter any copyright notices, trademarks, or proprietary marks from the software bundle.
+
+3. OWNERSHIP & INTELLECTUAL PROPERTY
+All rights, titles, and copyrights in and to the TaleForger SDK (including code, architecture, documentation, and embedded assets) are owned by Fairy Tale Factory.
+
+4. DISCLAIMER OF WARRANTY
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
+5. LIMITATION OF LIABILITY
+IN NO EVENT SHALL FAIRY TALE FACTORY BE LIABLE FOR ANY DAMAGES ARISING OUT OF THE USE OF OR INABILITY TO USE THIS SOFTWARE.
+
+By checking the acceptance box and proceeding with the installation, you agree to be bound by the terms of this EULA.

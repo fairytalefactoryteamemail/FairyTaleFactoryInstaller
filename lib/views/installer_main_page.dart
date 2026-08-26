@@ -1,4 +1,5 @@
-import 'package:fluentui_system_icons/fluentui_system_icons.dart' show FluentIcons;
+import 'package:fluentui_system_icons/fluentui_system_icons.dart'
+    show FluentIcons;
 import 'package:flutter/material.dart';
 import 'package:installer/core/app_theme.dart' show AppColors;
 import 'package:window_manager/window_manager.dart';
@@ -24,22 +25,75 @@ class _InstallerMainPageState extends State<InstallerMainPage> {
   void initState() {
     super.initState();
     _pathController = TextEditingController(text: _controller.installPath);
+
+    // همگام‌سازی تغییرات مسیر متن ورودی با کنترلر اصلی
+    _pathController.addListener(() {
+      _controller.installPath = _pathController.text;
+    });
+
     _appLang.addListener(() => setState(() {}));
-    _controller.addListener(() => setState(() {}));
+    _controller.addListener(() {
+      // اگر مسیر در کنترلر تغییر کرد، کنترلر متنی را آپدیت کن
+      if (_pathController.text != _controller.installPath) {
+        _pathController.text = _controller.installPath;
+      }
+      setState(() {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _pathController.dispose();
+    super.dispose();
+  }
+
+  /// مدیریت کلیک روی دکمه ادامه / نصب
+  void _handleNextAction() async {
+    if (_controller.currentStep == InstallStep.complete) {
+      windowManager.close();
+      return;
+    }
+
+    if (_controller.currentStep == InstallStep.options) {
+      // ۱. ثبت مسیر نهایی از TextField
+      _controller.installPath = _pathController.text.trim();
+
+      // ۲. رفتن به مرحله Progress
+      _controller.nextStep();
+
+      // ۳. شروع عملیات استخراج واقعی زیپ
+      final success = await _controller.startInstallation();
+
+      // ۴. در صورت بروز خطا در استخراج
+      if (!success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_appLang.translate('install_failed_msg')),
+            backgroundColor: Colors.redAccent,
+          ),
+        );
+      }
+      return;
+    }
+
+    _controller.nextStep();
   }
 
   @override
   Widget build(BuildContext context) {
+    final appTitleName = _controller.config?.appName ?? '';
+    final fullTitle = '${_appLang.translate('install')} $appTitleName'.trim();
+
     return Directionality(
       textDirection: _appLang.isRtl ? TextDirection.rtl : TextDirection.ltr,
       child: Scaffold(
-        backgroundColor: const Color(0xFF121318),
+        backgroundColor: AppColors.bgCanvas,
         body: Column(
           children: [
             // Custom TitleBar
             Container(
               height: 36,
-              color: const Color(0xFF1B1C22),
+              color: AppColors.bgSurface,
               child: Row(
                 children: [
                   Expanded(
@@ -47,8 +101,11 @@ class _InstallerMainPageState extends State<InstallerMainPage> {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         child: Text(
-                          _appLang.translate('app_title'),
-                          style: const TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+                          fullTitle,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: AppColors.textSecondary,
+                          ),
                         ),
                       ),
                     ),
@@ -72,7 +129,7 @@ class _InstallerMainPageState extends State<InstallerMainPage> {
             // Bottom Navigation Actions
             Container(
               padding: const EdgeInsets.all(16),
-              color: const Color(0xFF1B1C22),
+              color: AppColors.bgSurface,
               child: Row(
                 children: [
                   if (_controller.currentStep != InstallStep.language &&
@@ -85,18 +142,13 @@ class _InstallerMainPageState extends State<InstallerMainPage> {
                   const Spacer(),
                   if (_controller.currentStep != InstallStep.progress)
                     ElevatedButton(
-                      onPressed: (_controller.currentStep == InstallStep.eula &&
-                              !_controller.eulaAccepted)
-                          ? null
-                          : () {
-                              if (_controller.currentStep == InstallStep.complete) {
-                                windowManager.close();
-                              } else {
-                                _controller.nextStep();
-                              }
-                            },
+                      onPressed:
+                          (_controller.currentStep == InstallStep.eula &&
+                                  !_controller.eulaAccepted)
+                              ? null
+                              : _handleNextAction,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color.fromARGB(255, 27, 122, 255),
+                        backgroundColor: AppColors.accent,
                       ),
                       child: Text(
                         _controller.currentStep == InstallStep.options
@@ -104,7 +156,7 @@ class _InstallerMainPageState extends State<InstallerMainPage> {
                             : _controller.currentStep == InstallStep.complete
                                 ? _appLang.translate('finish')
                                 : _appLang.translate('next'),
-                                style: TextStyle(color: Colors.white),
+                        style: const TextStyle(color: Colors.white),
                       ),
                     ),
                 ],
@@ -128,7 +180,7 @@ class _InstallerMainPageState extends State<InstallerMainPage> {
           isAccepted: _controller.eulaAccepted,
           onAcceptChanged: (val) => _controller.setEulaAccepted(val),
           acceptText: _appLang.translate('eula_accept'),
-          eulaContent: _appLang.translate('eula_text'), // <--- این بخش مقداردهی شد
+          eulaContent: _appLang.translate('eula_text'),
         );
       case InstallStep.options:
         return StepOptions(
@@ -140,39 +192,48 @@ class _InstallerMainPageState extends State<InstallerMainPage> {
           pathLabel: _appLang.translate('install_path'),
           addPathLabel: _appLang.translate('add_path'),
           shortcutLabel: _appLang.translate('desktop_shortcut'),
+          defaultSubDir: _controller.config?.defaultSubDir ?? '',
         );
       case InstallStep.progress:
         return Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(_appLang.translate('installing_title'), style: const TextStyle(fontSize: 14)),
+            Text(
+              _appLang.translate('installing_title'),
+              style: const TextStyle(fontSize: 14),
+            ),
             const SizedBox(height: 16),
-            LinearProgressIndicator(value: _controller.progress, color: const Color(0xFF6366F1)),
+            LinearProgressIndicator(
+              value: _controller.progress,
+              color: AppColors.accent,
+            ),
             const SizedBox(height: 8),
-            Text(_controller.statusMessage, style: const TextStyle(fontSize: 11, color: Colors.grey)),
+            Text(
+              _controller.statusMessage,
+              style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+            ),
           ],
         );
-    
+
       case InstallStep.complete:
         return Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-Container(
+              Container(
                 width: 72,
                 height: 72,
                 decoration: BoxDecoration(
-                  color: AppColors.accent.withOpacity(0.12), // پس‌زمینه ملایم با رنگ آکسنت
+                  color: AppColors.accent.withOpacity(0.12),
                   shape: BoxShape.circle,
                   border: Border.all(color: AppColors.accent, width: 2),
                 ),
                 child: const Icon(
-                  FluentIcons.checkmark_24_regular, // یا FluentIcons.checkmark_24_filled
+                  FluentIcons.checkmark_24_regular,
                   size: 36,
                   color: AppColors.accent,
                 ),
               ),
-              
               const SizedBox(height: 16),
               Text(
                 _appLang.translate('completed_title'),
@@ -186,7 +247,7 @@ Container(
               Text(
                 _appLang.translate('completed_sub'),
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   height: 1.6,
                   color: AppColors.textSecondary,
@@ -195,8 +256,6 @@ Container(
             ],
           ),
         );
-    
-    
     }
   }
 }
